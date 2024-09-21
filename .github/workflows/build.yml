@@ -1,4 +1,4 @@
-name: Build and Release Startset
+name: Build and Release TaskbarUtil
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
 
-    - name: Build Startset
+    - name: Build TaskbarUtil
       run: |
         go mod tidy
         go build -o taskbarutil.exe main.go
@@ -53,7 +53,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         gh release create $env:RELEASE_VERSION taskbarutil.exe `
-          --title "Startset v$env:RELEASE_VERSION" `
+          --title "TaskbarUtil v$env:RELEASE_VERSION" `
           --notes "Release notes or changes in this version."
 
     # Upload Binary to the created Release
