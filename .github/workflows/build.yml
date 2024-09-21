@@ -1,0 +1,65 @@
+name: Build and Release Startset
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE20: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Build Startset
+      run: |
+        go mod tidy
+        go build -o taskbarutil.exe main.go
+
+    # Generate a version based on the current date in YYYY.MM.DD format using PowerShell
+    - name: Set Release Version
+      id: set_version
+      shell: pwsh
+      run: |
+        $version = Get-Date -Format "yyyy.MM.dd"
+        echo "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
+    # Create a release using GitHub CLI with PowerShell syntax corrected
+    - name: Create Release with GitHub CLI
+      shell: pwsh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create $env:RELEASE_VERSION taskbarutil.exe `
+          --title "Startset v$env:RELEASE_VERSION" `
+          --notes "Release notes or changes in this version."
+
+    # Upload Binary to the created Release
+    - name: Upload Binary using GitHub CLI
+      shell: pwsh
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release upload $env:RELEASE_VERSION taskbarutil.exe --clobber
