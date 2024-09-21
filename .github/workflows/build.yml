@@ -46,12 +46,13 @@ jobs:
         $version = Get-Date -Format "yyyy.MM.dd"
         echo "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
 
-    # Create a release using GitHub CLI with PowerShell syntax corrected
+    # Login to GitHub CLI and create a release
     - name: Create Release with GitHub CLI
       shell: pwsh
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        gh auth login --with-token < $env:GITHUB_TOKEN
         gh release create $env:RELEASE_VERSION taskbarutil.exe `
           --title "TaskbarUtil v$env:RELEASE_VERSION" `
           --notes "Release notes or changes in this version."
